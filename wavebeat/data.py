@@ -216,6 +216,11 @@ class DownbeatDataset(torch.utils.data.Dataset):
         audio, sr = torchaudio.load(audio_filename)
         audio = audio.float()
 
+        # convert to mono by averaging the stereo; in_ch becomes 1
+        if len(audio) == 2:
+            #print("WARNING: Audio is not mono")
+            audio = torch.mean(audio, dim=0).unsqueeze(0)
+
         # resample if needed
         if sr != self.audio_sample_rate:
             audio = julius.resample_frac(audio, sr, self.audio_sample_rate)   
