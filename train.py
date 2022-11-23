@@ -99,6 +99,9 @@ for dataset in datasets:
         audio_dir = args.rwc_popular_audio_dir
         annot_dir = args.rwc_popular_annot_dir
 
+    if not audio_dir or not annot_dir:
+        continue
+
     train_dataset = DownbeatDataset(audio_dir,
                                     annot_dir,
                                     dataset=dataset,

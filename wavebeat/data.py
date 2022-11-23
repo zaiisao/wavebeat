@@ -71,12 +71,12 @@ class DownbeatDataset(torch.utils.data.Dataset):
         #print(f"Target length: {self.target_length}")
 
         # first get all of the audio files
-        if self.dataset in ["beatles", "rwc_popular"]:
-            file_ext = "*L+R.wav"
-        elif self.dataset in ["ballroom", "hainsworth", "gtzan", "smc"]:
-            file_ext = "*.wav"
-        else:
-            raise ValueError(f"Invalid dataset: {self.dataset}")
+        # if self.dataset in ["beatles", "rwc_popular"]:
+        #     file_ext = "*L+R.wav"
+        # elif self.dataset in ["ballroom", "hainsworth", "gtzan", "smc"]:
+        file_ext = "*.wav"
+        # else:
+            # raise ValueError(f"Invalid dataset: {self.dataset}")
 
         self.audio_files = glob.glob(os.path.join(self.audio_dir, "**", file_ext))
         if len(self.audio_files) == 0: # try from the root audio dir
@@ -109,10 +109,10 @@ class DownbeatDataset(torch.utils.data.Dataset):
         self.annot_files = []
         for audio_file in self.audio_files:
             # find the corresponding annot file
-            if self.dataset in ["rwc_popular", "beatles"]:
-                replace = "_L+R.wav"
-            elif self.dataset in ["ballroom", "hainsworth", "gtzan", "smc"]:
-                replace = ".wav"
+            # if self.dataset in ["rwc_popular", "beatles"]:
+            #     replace = "_L+R.wav"
+            # elif self.dataset in ["ballroom", "hainsworth", "gtzan", "smc"]:
+            replace = ".wav"
             
             filename = os.path.basename(audio_file).replace(replace, "")
 
@@ -120,14 +120,16 @@ class DownbeatDataset(torch.utils.data.Dataset):
                 self.annot_files.append(os.path.join(self.annot_dir, f"{filename}.beats"))
             elif self.dataset == "hainsworth":
                 genre_dir = os.path.basename(os.path.dirname(audio_file))
-                self.annot_files.append(os.path.join(self.annot_dir, genre_dir, f"{filename}.txt"))
+                #self.annot_files.append(os.path.join(self.annot_dir, genre_dir, f"{filename}.txt"))
+                self.annot_files.append(os.path.join(self.annot_dir, f"{filename}.txt"))
             elif self.dataset == "beatles":
                 album_dir = os.path.basename(os.path.dirname(audio_file))
                 annot_file = os.path.join(self.annot_dir, album_dir, f"{filename}.txt")
                 self.annot_files.append(annot_file)
             elif self.dataset == "rwc_popular":
-                album_dir = os.path.basename(os.path.dirname(audio_file))
-                annot_file = os.path.join(self.annot_dir, album_dir, f"{filename}.BEAT.TXT")
+                #album_dir = os.path.basename(os.path.dirname(audio_file))
+                #annot_file = os.path.join(self.annot_dir, album_dir, f"{filename}.BEAT.TXT")
+                annot_file = os.path.join(self.annot_dir, f"{filename}.BEAT.TXT")
                 self.annot_files.append(annot_file)
             elif self.dataset == "gtzan":
                 annot_file = os.path.join(self.annot_dir, f"{filename}.wav.txt")
