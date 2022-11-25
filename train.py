@@ -69,7 +69,8 @@ else:
 # parse them args
 args = parser.parse_args()
 
-datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
+#datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
+datasets = ["ballroom", "hainsworth"]
 
 # set the seed
 pl.seed_everything(42)
@@ -79,8 +80,7 @@ args.default_root_dir = os.path.join("lightning_logs", "full")
 print(args.default_root_dir)
 
 # create the trainer
-trainer = pl.Trainer.from_argparse_args(args, callbacks=[checkpoint_callback])
-#trainer = pl.Trainer(accelerator='gpu', devices=2, callbacks=[checkpoint_callback])
+trainer = pl.Trainer.from_argparse_args(args, checkpoint_callback=checkpoint_callback)
 
 # setup the dataloaders
 train_datasets = []
@@ -99,9 +99,6 @@ for dataset in datasets:
     elif dataset == "rwc_popular":
         audio_dir = args.rwc_popular_audio_dir
         annot_dir = args.rwc_popular_annot_dir
-
-    if not audio_dir or not annot_dir:
-        continue
 
     train_dataset = DownbeatDataset(audio_dir,
                                     annot_dir,
