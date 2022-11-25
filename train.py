@@ -80,7 +80,7 @@ args.default_root_dir = os.path.join("lightning_logs", "full")
 print(args.default_root_dir)
 
 # create the trainer
-trainer = pl.Trainer.from_argparse_args(args, checkpoint_callback=checkpoint_callback)
+trainer = pl.Trainer.from_argparse_args(args, callbacks=[checkpoint_callback])
 
 # setup the dataloaders
 train_datasets = []
