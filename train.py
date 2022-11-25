@@ -69,8 +69,7 @@ else:
 # parse them args
 args = parser.parse_args()
 
-#datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
-datasets = ["ballroom", "hainsworth"]
+datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
 
 # set the seed
 pl.seed_everything(42)
