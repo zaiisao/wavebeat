@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from argparse import ArgumentParser
 
 from wavebeat.plot import plot_activations, make_table, plot_histogram
-from wavebeat.loss import GlobalMSELoss, GlobalBCELoss, BCFELoss
+from wavebeat.loss import GlobalMSELoss, GlobalBCELoss, BCFELoss, SigmoidFocalLoss
 from wavebeat.utils import center_crop, causal_crop
 from wavebeat.eval import evaluate, find_beats
 from wavebeat.filter import FIRFilter
@@ -34,12 +34,13 @@ class Base(pl.LightningModule):
 
         # these lines need to be commented out when trying
         # to jit these models in `export.py`
-        self.l1 = torch.nn.L1Loss()
-        self.l2 = torch.nn.MSELoss()
-        self.bce = torch.nn.BCELoss()
-        self.gmse = GlobalMSELoss()
-        self.gbce = GlobalBCELoss()
+        # self.l1 = torch.nn.L1Loss()
+        # self.l2 = torch.nn.MSELoss()
+        # self.bce = torch.nn.BCELoss()
+        # self.gmse = GlobalMSELoss()
+        # self.gbce = GlobalBCELoss()
         self.bcfe = BCFELoss()
+        self.focalLoss = SigmoidFocalLoss(2.0, 0.25)
 
     def forward(self, x):
         pass
@@ -120,7 +121,8 @@ class Base(pl.LightningModule):
 
         # compute the error using appropriate loss      
         #loss, _, _ = self.gbce(pred, target)
-        loss, _, _ = self.bcfe(pred, target)
+        #loss, _, _ = self.bcfe(pred, target)
+        loss = self.focalLoss(pred, target)
 
         self.log('train_loss', 
                  loss, 
@@ -147,6 +149,7 @@ class Base(pl.LightningModule):
         # compute the validation error using all losses
         #loss, _, _ = self.gbce(pred, target_crop)
         loss, _, _ = self.bcfe(pred, target_crop)
+        #loss = self.focalLoss(pred, target)
 
         self.log('val_loss', loss)
 

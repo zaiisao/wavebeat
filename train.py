@@ -13,6 +13,8 @@ from wavebeat.dstcn import dsTCNModel
 #from wavebeat.waveunet import WaveUNetModel
 from wavebeat.data import DownbeatDataset
 
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
+
 torch.backends.cudnn.benchmark = True
 
 parser = ArgumentParser()
@@ -37,8 +39,8 @@ parser.add_argument('--val_subset', type=str, default='val')
 parser.add_argument('--train_length', type=int, default=65536)
 parser.add_argument('--train_fraction', type=float, default=1.0)
 parser.add_argument('--eval_length', type=int, default=131072)
-parser.add_argument('--batch_size', type=int, default=32)
-parser.add_argument('--num_workers', type=int, default=0)
+parser.add_argument('--batch_size', type=int, default=16)
+parser.add_argument('--num_workers', type=int, default=4)
 parser.add_argument('--augment', action='store_true')
 parser.add_argument('--dry_run', action='store_true')
 
@@ -69,7 +71,8 @@ else:
 # parse them args
 args = parser.parse_args()
 
-datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
+#datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular"]
+datasets = ["ballroom"]
 
 # set the seed
 pl.seed_everything(42)
@@ -156,8 +159,17 @@ elif args.model_type == 'waveunet':
 elif args.model_type == 'dstcn':
     model = dsTCNModel(**dict_args)
 
-# summary 
-torchsummary.summary(model, [(1,args.train_length)], device="cpu")
+# summary: https://velog.io/@rapidrabbit76/torchsummary-Forwardbackward-pass-size 
+torchsummary.summary(model, [(1,args.train_length)], device="cpu")  #input_size = [(1,args.train_length)],
+#MJ: The wavebeat model summary is as follows: args.train_length= 2097152=2^21 samples (22050Hz)
+# Total params: 2,761,602
+# Trainable params: 2,761,602
+# Non-trainable params: 0
+# ----------------------------------------------------------------
+# Input size (MB): 8.00
+# Forward/backward pass size (MB): 6024.12
+# Params size (MB): 10.53
+# Estimated Total Size (MB): 6042.66
 
 # train!
 trainer.fit(model, train_dataloader, val_dataloader)
