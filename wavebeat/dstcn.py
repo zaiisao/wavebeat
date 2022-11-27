@@ -54,6 +54,9 @@ class dsTCNBlock(torch.nn.Module):
             self.norm1 = torch.nn.BatchNorm1d(out_ch)
             #self.norm2 = torch.nn.BatchNorm1d(out_ch)
             self.res_norm = torch.nn.BatchNorm1d(out_ch)
+        elif norm_type == "GroupNorm":
+            self.norm1 = torch.nn.GroupNorm(32, out_ch)
+            self.res_norm = torch.nn.GroupNorm(32, out_ch)
         else:
             self.norm1 = None
             self.res_norm = None
@@ -112,7 +115,7 @@ class dsTCNModel(Base):
     def __init__(self, 
                  ninputs=1,
                  noutputs=2,
-                 nblocks=10, 
+                 nblocks=8, 
                  kernel_size=3, 
                  stride=2,
                  dilation_growth=8, 
@@ -179,7 +182,7 @@ class dsTCNModel(Base):
         parser.add_argument('--kernel_size', type=int, default=15)
         parser.add_argument('--stride', type=int, default=2)
         parser.add_argument('--dilation_growth', type=int, default=8)
-        parser.add_argument('--channel_growth', type=int, default=1)
+        parser.add_argument('--channel_growth', type=int, default=1) #=32 in launch.json
         parser.add_argument('--channel_width', type=int, default=32)
         parser.add_argument('--stack_size', type=int, default=4)
         parser.add_argument('--grouped', default=False, action='store_true')
