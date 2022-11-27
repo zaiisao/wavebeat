@@ -148,8 +148,8 @@ class Base(pl.LightningModule):
 
         # compute the validation error using all losses
         #loss, _, _ = self.gbce(pred, target_crop)
-        loss, _, _ = self.bcfe(pred, target_crop)
-        #loss = self.focalLoss(pred, target)
+        #loss, _, _ = self.bcfe(pred, target_crop)
+        loss = self.focalLoss(pred, target_crop)
 
         self.log('val_loss', loss)
 

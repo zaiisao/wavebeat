@@ -63,7 +63,7 @@ class GlobalBCELoss(torch.nn.Module):
         return total_loss, beat_loss, no_beat_loss
 
 class BCFELoss(torch.nn.Module):
-    """ Binary cross-entropy false erorr. """
+    """ Binary cross-entropy mean false erorr. """
     def __init__(self):
         super(BCFELoss, self).__init__()
 
@@ -76,7 +76,7 @@ class BCFELoss(torch.nn.Module):
         beat_act_input = input[:,0,:]
         downbeat_act_input = input[:,1,:]
 
-        # beat errors
+        # beat errors: g
         target_beats = beat_act_target[beat_act_target == 1]
         input_beats =  beat_act_input[beat_act_target == 1]
 
@@ -111,77 +111,118 @@ class BCFELoss(torch.nn.Module):
         return total_loss, total_beat_loss, total_downbeat_loss
     
 class SigmoidFocalLoss(torch.nn.Module):
+    #MJ: BCE: https://curt-park.github.io/2018-09-19/loss-cross-entropy/
+    #(1) L(p∣x)에 대한 loglikelihood가 바로 negative binary cross entropy의 형태임을 알 수 있다.
+    #  Binary cross entropy는 파라미터 π 를 따르는 베르누이분포와 관측데이터의 분포가 얼마나 다른지를 나타내며, 
+    # 를 최소화하는 문제는 관측데이터에 가장 적합한(fitting) 베르누이분포의 파라미터 π를 추정하는 것으로 해석할 수 있다.
+    # BCE1(y; p) = ∑_{i=1}^{n} [ y_{i}*log(p)+(1−y_{i})log(1−p)), 
+    #   where y_{i} is a vector of target probabilities that audio sample points are beats, and 
+    #    p is a vector of predicted probabilities that audio sample points are beats
+    #  BCE1(y; p) is a vector of binary cross entropy loss.
+     
+    # BCE2(y; p) = ∑_{i=1}^{n} [ y_{i}*log(p)+(1−y_{i})log(1−p)), 
+    #   where y_{i} is a vector of target probabilities that audio sample points are downbeats, and 
+    #     p is a vector of predicted probabilities that audio sample points are downbeats
+    
+    # FL(y;p) = ∑_{i=1}^{n} [ alpha* (1 - p) ** gamma * y_{i}*log(p) + (1-alpha) * p ** gamma * (1−y_{i})log(1−p)) ]
+    
     def __init__(self, gamma, alpha):
         super().__init__()
 
         self.gamma = gamma
         self.alpha = alpha
 
-    def forward(self, out, target):
-        # out is the output of the TCN without sigmoid and has two channels (two classifiers, beat objects and downbeat objects)
-        # target is the binary tensor that represents beat and downbeat locations
+    def forward(self, preds, targets):
+        # preds is the output of the TCN without sigmoid and has two channels (two classifiers, beat objects and downbeat objects)
+        # targets is the binary tensor that represents beat and downbeat target locations
         
-        # split out the targets into beat targets and downbeat targets
-        beat_target = target[:,0,:]
-        downbeat_target = target[:,1,:]
+        # # split out the targets into beat targets and downbeat targets
+        # beat_target_bxn = targets[:,0,:]
+        # downbeat_target_bxn = targets[:,1,:]
 
-        beat_out = out[:,0,:]
-        downbeat_out = out[:,1,:]
+        # beat_pred_bxn = preds[:,0,:]
+        # downbeat_pred_bxn = preds[:,1,:]
 
-        # beat errors
-        target_beats = beat_target[beat_target == 1]
-        input_beats =  beat_out[beat_target == 1]
+        # # beat errors: extract value 1's from beat_target and value 1's from beat_out
+        # target_beats = beat_target_bxn[beat_target_bxn == 1]
+        # input_beats =  beat_pred_bxn[beat_target_bxn == 1]
 
-        # The binary cross entropy with logits contains the sigmoid layer in it
-        # beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_beats, target_beats)
+        # # The binary cross entropy with logits contains the sigmoid layer in it
+        # # beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_beats, target_beats)
 
-        # no beat errors
-        target_no_beats = beat_target[beat_target == 0]
-        input_no_beats = beat_out[beat_target == 0]
+        # # no beat errors:  extract value 0's from beat_target and value 0's from beat_out
+        # target_no_beats = beat_target_bxn[beat_target_bxn == 0]
+        # input_no_beats = beat_pred_bxn[beat_target_bxn == 0]
 
-        # no_beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_no_beats, target_no_beats)
+        # # no_beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_no_beats, target_no_beats)
 
-        # downbeat errors
-        target_downbeats = downbeat_target[downbeat_target == 1]
-        input_downbeats = downbeat_out[downbeat_target == 1]
+        # # downbeat errors: extract value 1's from downbeat_target and value 1's from downbeat_out
+        # target_downbeats = downbeat_target_bxn[downbeat_target_bxn == 1]
+        # input_downbeats = downbeat_pred_bxn[downbeat_target_bxn == 1]
 
-        # downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_downbeats, target_downbeats)
+        # # downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_downbeats, target_downbeats)
 
-        # no downbeat errors
-        target_no_downbeats = downbeat_target[downbeat_target == 0]
-        input_no_downbeats = downbeat_out[downbeat_target == 0]
+        # # no downbeat errors:  extract value 0's from downbeat_target and value 0's from downbeat_o
+        # target_no_downbeats = downbeat_target_bxn[downbeat_target_bxn == 0]
+        # input_no_downbeats = downbeat_pred_bxn[downbeat_target_bxn == 0]
 
-        # no_downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_no_downbeats, target_no_downbeats)
+        # # no_downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_no_downbeats, target_no_downbeats)
 
-        # sum up losses
-        # total_beat_loss = 1/2 * ((beat_loss + no_beat_loss )**2 + (beat_loss - no_beat_loss)**2)
-        # total_downbeat_loss = 1/2 * ((downbeat_loss + no_downbeat_loss )**2 + (downbeat_loss - no_downbeat_loss)**2)
+        # # sum up losses:  total_beat_loss = beat_loss**2 + no_beat_loss **2, which is the same as
+        # # total_beat_loss = 1/2 * ((beat_loss + no_beat_loss )**2 + (beat_loss - no_beat_loss)**2)
+        # # total_downbeat_loss = 1/2 * ((downbeat_loss + no_downbeat_loss )**2 + (downbeat_loss - no_downbeat_loss)**2)
 
-        # find form
-        # total_loss = total_beat_loss + total_downbeat_loss
+        # # find form
+        # # total_loss = total_beat_loss + total_downbeat_loss
 
-        # return total_loss, total_beat_loss, total_downbeat_loss
+        # # return total_loss, total_beat_loss, total_downbeat_loss
 
-        n_class = out.shape[1]
-        class_ids = torch.arange(
-            1, n_class + 1, dtype=target.dtype, device=target.device
-        ).unsqueeze(0)
+        n_class = preds.shape[1]
+        class_ids_1xc = torch.arange(
+             0, n_class, dtype=targets.dtype, device=targets.device
+         ).unsqueeze(0)
 
         # t represents the target beats for positive anchors
-        t = target.unsqueeze(1)
-        p = torch.sigmoid(out)
+        #targets_bx1xcxn = targets.unsqueeze(1) #  targets: shape = (B,2,W) = (B,C,W)
+        targets_bxcxn = targets
+        p_bxcxn = torch.sigmoid(preds)  # shape of pred_mat = (B,C,W) = (B,2,W)
+        p_bxcxn = torch.clamp(p_bxcxn, 1e-3, 1.0 - 1e-3)
 
         gamma = self.gamma
         alpha = self.alpha
 
-        term1 = (1 - p) ** gamma * torch.log(p)
-        term2 = p ** gamma * torch.log(1 - p)
+        term1_bxcxn = (1 - p_bxcxn) ** gamma * torch.log(p_bxcxn)
+        term2_bxcxn = p_bxcxn ** gamma * torch.log(1 - p_bxcxn)
 
         # print(term1.sum(), term2.sum())
-
-        loss = (
-            -(t == class_ids).float() * alpha * term1
-            - ((t != class_ids) * (t >= 0)).float() * (1 - alpha) * term2
+        #MJ:  In the following, several broadcasting operations are performed. Verify if they work correct.  
+        # bce_loss_bx1xcxn = (
+        #     -(targets_bx1xcxn  == class_ids_1xc).float() * alpha * term1_bxcxn
+        #     - (( targets_bx1xcxn  != class_ids_1xc) * (targets_bx1xcxn >= 0)).float() * (1 - alpha) * term2_bxcxn
+        # )
+        
+        # bce_loss_bx1xcxn = (
+        #     -(targets_bx1xcxn  == 1).float() * alpha * term1_bxcxn
+        #     - ( targets_bx1xcxn  == 0).float() * (1 - alpha) * term2_bxcxn
+        # )
+        
+        bce_loss_bxcxn = (
+            -(targets_bxcxn  == 1).float() * alpha * term1_bxcxn
+            - ( targets_bxcxn  == 0).float() * (1 - alpha) * term2_bxcxn
         )
+        
 
-        return loss.sum()
+        # pos_ids = torch.nonzero(targets_bxcxn> 0)
+        # return  bce_loss_bxcxn.sum()/ torch.clamp(pos_ids.numel(), min=1.0)
+        
+        return bce_loss_bxcxn.sum() / torch.clamp(targets_bxcxn.sum(), min=1.0)
+
+    #MJ: torch.nn.functional.binary_cross_entropy_with_logits(input_no_beats, target_no_beats) computes the mean by default.
+    # So, we compute the average bce focal loss.
+    
+    #MJ: Unstability of Sigmoid + BCE:
+    # refer to https://stackoverflow.com/questions/69454806/sigmoid-vs-binary-cross-entropy-loss
+    # BCEWithLogitsLoss (which is the same as F.binary_cross_entropy_with_logits): It is more numerically stable than using a plain Sigmoid followed by a BCELoss as, by combining the operations into one layer,
+    # we take advantage of the log-sum-exp trick for numerical stability.
+    # So, if you get some numerical problem with the current approach, you can use 
+    #  BCEWithLogitsLoss (which is the same as F.binary_cross_entropy_with_logits)
