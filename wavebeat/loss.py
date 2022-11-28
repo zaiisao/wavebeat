@@ -6,13 +6,15 @@ class GlobalMSELoss(torch.nn.Module):
 
     def forward(self, input, target):
         
-        # beat errors
-        target_beats = target[...,target == 1]
+        # beat losses
+        target_beats = target[...,target == 1]  # MJ: The ellipsis ... means as many : as possible.
+#                                                 random_array = np.random.rand(2, 2, 2, 2)
+#                                                 In such case, [:, :, :, 0] and [..., 0] are the same
         input_beats = input[...,target == 1]
 
         beat_loss = torch.nn.functional.mse_loss(input_beats, target_beats)
 
-        # no beat errors
+        # no beat losses
         target_no_beats = target[...,target == 0]
         input_no_beats = input[...,target == 0]
 
@@ -33,13 +35,13 @@ class GlobalBCELoss(torch.nn.Module):
         beat_act_input = input[:,0,:]
         downbeat_act_input = input[:,1,:]
 
-        # beat errors
+        # beat losses
         target_beats = beat_act_target[beat_act_target == 1]
         input_beats =  beat_act_input[beat_act_target == 1]
 
         beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_beats, target_beats)
 
-        # no beat errors
+        # non-beat (background) losses
         target_no_beats = beat_act_target[beat_act_target == 0]
         input_no_beats = beat_act_input[beat_act_target == 0]
 
@@ -51,7 +53,7 @@ class GlobalBCELoss(torch.nn.Module):
 
         downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_downbeats, target_downbeats)
 
-        # no downbeat errors
+        # non-downbeat (background) losses
         target_no_downbeats = downbeat_act_target[downbeat_act_target == 0]
         input_no_downbeats = downbeat_act_input[downbeat_act_target == 0]
 
@@ -76,26 +78,27 @@ class BCFELoss(torch.nn.Module):
         beat_act_input = input[:,0,:]
         downbeat_act_input = input[:,1,:]
 
-        # beat errors: g
+        # beat losses
         target_beats = beat_act_target[beat_act_target == 1]
         input_beats =  beat_act_input[beat_act_target == 1]
 
         # The binary cross entropy with logits contains the sigmoid layer in it
         beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_beats, target_beats)
 
-        # no beat errors
+        # no beat losses
         target_no_beats = beat_act_target[beat_act_target == 0]
         input_no_beats = beat_act_input[beat_act_target == 0]
 
         no_beat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_no_beats, target_no_beats)
 
-        # downbeat errors
+        # downbeat losses
         target_downbeats = downbeat_act_target[downbeat_act_target == 1]
         input_downbeats = downbeat_act_input[downbeat_act_target == 1]
 
         downbeat_loss = torch.nn.functional.binary_cross_entropy_with_logits(input_downbeats, target_downbeats)
 
-        # no downbeat errors
+        # no downbeat losses2402
+        
         target_no_downbeats = downbeat_act_target[downbeat_act_target == 0]
         input_no_downbeats = downbeat_act_input[downbeat_act_target == 0]
 
@@ -206,6 +209,15 @@ class SigmoidFocalLoss(torch.nn.Module):
         #     - ( targets_bx1xcxn  == 0).float() * (1 - alpha) * term2_bxcxn
         # )
         
+        #MJ: targets_bxcxn conaints BxCxN samples, which may be positive or negative. 
+        # (targets_bxcxn[:,0,:]  == 1) selects the positive samples for beat from each sample location in each audio in the batch
+        #  whereas  ( targets_bxcxn  == 0) selects the negatives.
+        # bce_loss_bxcxn[:,0:,:] is the bce of the beat classifier (for each audio sample point in each batch) 
+        # and  bce_loss_bxcxn[:,1:,:] is the bce of the downbeat classifier. 
+        #  p_bxcxn[i,0,k] is the probability that audio sample k in audio i in the batch is a beat. 
+        # If the probability  approaches 1,  the sample k is more likely to be a beat. 
+        # If the probability  approaches 0, the sample k is more likely to be background.
+        # p_bxcxn[i,1,k] is the probability that audio sample k in audio i in the batch is a downbeat.
         bce_loss_bxcxn = (
             -(targets_bxcxn  == 1).float() * alpha * term1_bxcxn
             - ( targets_bxcxn  == 0).float() * (1 - alpha) * term2_bxcxn
