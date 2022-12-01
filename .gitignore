@@ -133,3 +133,5 @@ lightning_logs/
 *.ckpt
 *.zip
 .DS_Store
+
+checkpoints/

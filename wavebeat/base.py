@@ -28,6 +28,7 @@ class Base(pl.LightningModule):
                     lr = 3e-4, 
                     save_dir = None,
                     num_examples = 4,
+                    focal_gamma=2.0,
                     **kwargs):
         super(Base, self).__init__()
         self.save_hyperparameters()
@@ -40,7 +41,7 @@ class Base(pl.LightningModule):
         # self.gmse = GlobalMSELoss()
         # self.gbce = GlobalBCELoss()
         self.bcfe = BCFELoss()
-        self.focalLoss = SigmoidFocalLoss(2.0, 0.25)
+        self.focalLoss = SigmoidFocalLoss(focal_gamma, 0.25)
 
     def forward(self, x):
         pass

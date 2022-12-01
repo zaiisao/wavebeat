@@ -128,7 +128,7 @@ class dsTCNModel(Base):
                  norm_type='BatchNorm',
                  act_type='PReLU',
                  **kwargs):
-        super(dsTCNModel, self).__init__()
+        super(dsTCNModel, self).__init__(**kwargs)
         self.save_hyperparameters()
 
         self.blocks = torch.nn.ModuleList()
