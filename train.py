@@ -43,6 +43,7 @@ parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--num_workers', type=int, default=4)
 parser.add_argument('--augment', action='store_true')
 parser.add_argument('--dry_run', action='store_true')
+parser.add_argument('--focal_gamma', type=float, default=2.0)
 
 checkpoint_callback = ModelCheckpoint(
     verbose=True,
