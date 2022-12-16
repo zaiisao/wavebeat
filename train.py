@@ -44,6 +44,7 @@ parser.add_argument('--num_workers', type=int, default=4)
 parser.add_argument('--augment', action='store_true')
 parser.add_argument('--dry_run', action='store_true')
 parser.add_argument('--focal_gamma', type=float, default=2.0)
+parser.add_argument('--validation_fold', type=int, default=None)
 
 checkpoint_callback = ModelCheckpoint(
     verbose=True,
@@ -113,7 +114,8 @@ for dataset in datasets:
                                     half=True if args.precision == 16 else False,
                                     preload=args.preload,
                                     length=args.train_length,
-                                    dry_run=args.dry_run)
+                                    dry_run=args.dry_run,
+                                    validation_fold=args.validation_fold)
     train_datasets.append(train_dataset)
 
     val_dataset = DownbeatDataset(audio_dir,
@@ -126,7 +128,8 @@ for dataset in datasets:
                                  half=True if args.precision == 16 else False,
                                  preload=args.preload,
                                  length=args.eval_length,
-                                 dry_run=args.dry_run)
+                                 dry_run=args.dry_run,
+                                 validation_fold=args.validation_fold)
     val_datasets.append(val_dataset)
 
 train_dataset_list = torch.utils.data.ConcatDataset(train_datasets)
