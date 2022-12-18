@@ -124,7 +124,7 @@ for dataset in datasets:
                                  audio_sample_rate=args.audio_sample_rate,
                                  target_factor=args.target_factor,
                                  subset="val",
-                                 augment=False,
+                                 augment=False,  #MJ: Augumentation is NOT applied to val_dataset.
                                  half=True if args.precision == 16 else False,
                                  preload=args.preload,
                                  length=args.eval_length,
@@ -141,7 +141,7 @@ train_dataloader = torch.utils.data.DataLoader(train_dataset_list,
                                                 num_workers=args.num_workers,
                                                 pin_memory=True)
 val_dataloader = torch.utils.data.DataLoader(val_dataset_list, 
-                                            shuffle=args.shuffle,
+                                            shuffle=args.shuffle,  #MJ: parser.add_argument('--shuffle', type=bool, default=True)
                                             batch_size=1,
                                             num_workers=args.num_workers,
                                             pin_memory=False)    

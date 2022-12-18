@@ -1,9 +1,10 @@
 import os
 import glob
 import soundfile as sf
+from pathlib import Path
 
-audio_dir = ""
-annot_dir = ""
+audio_dir = "/mount/beat-tracking/beatles/data"
+annot_dir = "/mount/beat-tracking/beatles/label"
 
 #--audio_dir /home/cjstein/datasets/BallroomData \
 #--annot_dir /home/cjstein/datasets/BallroomAnnotations \
@@ -24,6 +25,12 @@ for idx, audio_file in enumerate(audio_files):
     audioL = audio[:,0]
     audioR = audio[:,1]
     audioM = (audioL + audioR)/2
+
+    audio_file_dir = str(Path(audio_file).resolve().parent)
+    if not os.path.exists(audio_file_dir.replace("/data", "/data_lr")):
+        os.makedirs(audio_file_dir.replace("/data", "/data_lr"))
+    
+    audio_file = audio_file.replace("/data/", "/data_lr/")
 
     left_filename = audio_file.replace(".wav", "_L.wav")
     right_filename = audio_file.replace(".wav", "_R.wav")

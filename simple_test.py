@@ -36,6 +36,7 @@ parser.add_argument('--gtzan_audio_dir', type=str, default='./data')
 parser.add_argument('--gtzan_annot_dir', type=str, default='./data')
 parser.add_argument('--smc_audio_dir', type=str, default='./data')
 parser.add_argument('--smc_annot_dir', type=str, default='./data')
+parser.add_argument('--validation_fold', type=int, default=None)
 
 args = parser.parse_args()
 
@@ -74,6 +75,7 @@ model.to('cuda:0')
 model.eval()
 
 datasets = ["beatles", "ballroom", "hainsworth", "rwc_popular", "gtzan", "smc"]
+#datasets = ["gtzan", "smc"]
 results = {} # storage for our result metrics
 
 # set the seed
@@ -108,10 +110,11 @@ for dataset in datasets:
                                     subset="test" if not dataset in ["gtzan", "smc"] else "full-val",
                                     augment=False,
                                     half=True if config['precision'] == 16 else False,
-                                    preload=args.preload)
+                                    preload=args.preload,
+                                    validation_fold=args.validation_fold)
 
     test_dataloader = torch.utils.data.DataLoader(test_dataset, 
-                                                    shuffle=False,
+                                                    shuffle=False, #MJ: test_dataloader does not use shffule when creating batches
                                                     batch_size=1,
                                                     num_workers=args.num_workers,
                                                     pin_memory=True)

@@ -80,9 +80,9 @@ class DownbeatDataset(torch.utils.data.Dataset):
         # else:
             # raise ValueError(f"Invalid dataset: {self.dataset}")
 
-        fold_files = glob.glob(os.path.join(self.annot_dir, "*.folds"))
-        if self.validation_fold is not None and len(fold_files) > 0:
-            fold_file = fold_files[0]
+        fold_files = glob.glob(os.path.join(self.annot_dir, "*.folds"))  #MJ: /mount/beat-tracking/ballroom/label/???.folds etc
+        if self.validation_fold is not None and len(fold_files) > 0 and self.subset in ["train", "val", "test"]:
+            fold_file = fold_files[0]  #MJ: len(fold_files) = 1
             self.audio_files = []
             with open(fold_file, 'r') as fp:
                 lines = fp.readlines()
@@ -93,12 +93,12 @@ class DownbeatDataset(torch.utils.data.Dataset):
                     audio_filename, fold_number = line.split(' ')
                     audio_filename_start = len(self.dataset) + 1 # Each line in a .folds file starts with "DATASET_"
 
-                    is_valid_and_training = self.subset == "train" and validation_fold != int(fold_number)
-                    is_valid_and_test = (self.subset in ["val", "test"] and validation_fold == int(fold_number))
+                    is_valid_and_training = self.subset == "train" and validation_fold != int(fold_number)  #MJ: is the file for training
+                    is_valid_and_test = (self.subset in ["val", "test"] and validation_fold == int(fold_number)) #MJ: is the file for  validation or testing????
 
                     if is_valid_and_training or is_valid_and_test:
                         audio_file_path = os.path.join(self.audio_dir, audio_filename[audio_filename_start:] + ".wav")
-                        if not os.path.isfile(audio_file_path):
+                        if not os.path.isfile(audio_file_path): #MJ: audio_file_path is not a file? If recursive is true, the pattern “**” will match any files and zero or more directories and subdirectories. If the pattern is followed by an os.sep, only directories and subdirectories match.
                             audio_file_paths = glob.glob(os.path.join(self.audio_dir, "**", audio_filename[audio_filename_start:] + ".wav"), recursive=True)
                             if len(audio_file_paths) > 0:
                                 audio_file_path = audio_file_paths[0]
@@ -108,13 +108,15 @@ class DownbeatDataset(torch.utils.data.Dataset):
                         else:
                             print(f"{audio_file_path} not found; skipping")
 
-            random.shuffle(self.audio_files) # shuffle them
-        else:
+            #random.shuffle(self.audio_files) # shuffle them: using random()
+        else: #MJ: the original version of wavebeat
             self.audio_files = glob.glob(os.path.join(self.audio_dir, "**", file_ext))
             if len(self.audio_files) == 0: # try from the root audio dir
                 self.audio_files = glob.glob(os.path.join(self.audio_dir, file_ext))
 
-            random.shuffle(self.audio_files) # shuffle them
+            self.audio_files = sorted(self.audio_files)
+
+            #random.shuffle(self.audio_files) # shuffle them
 
             if self.subset == "train":
                 start = 0
@@ -135,7 +137,7 @@ class DownbeatDataset(torch.utils.data.Dataset):
             print(f"Selected 1 file for dry run.")
         else:
             # now pick out subset of audio files
-            if self.validation_fold is None:
+            if self.validation_fold is None:  #MJ: the original version of wavebeat
                 self.audio_files = self.audio_files[start:stop]
 
             print(f"Selected {len(self.audio_files)} files for {self.subset} set from {self.dataset} dataset.")
@@ -189,11 +191,11 @@ class DownbeatDataset(torch.utils.data.Dataset):
                         target = target.half()
                     self.data.append((audio, target, metadata))
 
-    def __len__(self):
+    def __len__(self): #MJ: the length of the dataset
         if self.subset in ["test", "val", "full-val", "full-test"]:
             length = len(self.audio_files)
         else:
-            length = self.examples_per_epoch
+            length = self.examples_per_epoch  #MJ: in case of train.
         return length
 
     def __getitem__(self, idx):
@@ -211,7 +213,7 @@ class DownbeatDataset(torch.utils.data.Dataset):
         target = target.float()
 
         # apply augmentations 
-        if self.augment: 
+        if self.augment: #MJ: Is augumentation applied even to the case of val and test dataset? =? NO
             audio, target = self.apply_augmentations(audio, target)
 
         N_audio = audio.shape[-1]   # audio samples
@@ -255,7 +257,7 @@ class DownbeatDataset(torch.utils.data.Dataset):
         audio, sr = torchaudio.load(audio_filename)
         audio = audio.float()
 
-        # convert to mono by averaging the stereo; in_ch becomes 1
+        # convert to mono by averaging the stereo; in_ch becomes 1: The following statement is added by JA.
         if len(audio) == 2:
             #print("WARNING: Audio is not mono")
             audio = torch.mean(audio, dim=0).unsqueeze(0)
