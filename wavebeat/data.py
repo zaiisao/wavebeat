@@ -84,6 +84,9 @@ class DownbeatDataset(torch.utils.data.Dataset):
         if self.validation_fold is not None and len(fold_files) > 0 and self.subset in ["train", "val", "test"]:
             fold_file = fold_files[0]  #MJ: len(fold_files) = 1
             self.audio_files = []
+
+            k = 8 # JA: k = 8 is the standard in beat tracking
+
             with open(fold_file, 'r') as fp:
                 lines = fp.readlines()
 
@@ -93,10 +96,21 @@ class DownbeatDataset(torch.utils.data.Dataset):
                     audio_filename, fold_number = line.split(' ')
                     audio_filename_start = len(self.dataset) + 1 # Each line in a .folds file starts with "DATASET_"
 
-                    is_valid_and_training = self.subset == "train" and validation_fold != int(fold_number)  #MJ: is the file for training
-                    is_valid_and_test = (self.subset in ["val", "test"] and validation_fold == int(fold_number)) #MJ: is the file for  validation or testing????
+                    test_fold = (validation_fold + 1) % k
+                    is_valid_and_training = \
+                        self.subset == "train" \
+                        and validation_fold != int(fold_number) \
+                        and test_fold != int(fold_number) #MJ: is the file for training
 
-                    if is_valid_and_training or is_valid_and_test:
+                    is_valid_and_validation = \
+                        self.subset == "val" and \
+                        validation_fold == int(fold_number) #MJ: is the file for  validation or testing????
+
+                    is_valid_and_test = \
+                        self.subset == "test" \
+                        and test_fold == int(fold_number)
+
+                    if is_valid_and_training or is_valid_and_validation or is_valid_and_test:
                         audio_file_path = os.path.join(self.audio_dir, audio_filename[audio_filename_start:] + ".wav")
                         if not os.path.isfile(audio_file_path): #MJ: audio_file_path is not a file? If recursive is true, the pattern “**” will match any files and zero or more directories and subdirectories. If the pattern is followed by an os.sep, only directories and subdirectories match.
                             audio_file_paths = glob.glob(os.path.join(self.audio_dir, "**", audio_filename[audio_filename_start:] + ".wav"), recursive=True)
