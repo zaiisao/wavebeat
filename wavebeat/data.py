@@ -128,12 +128,12 @@ class DownbeatDataset(torch.utils.data.Dataset):
             if len(self.audio_files) == 0: # try from the root audio dir
                 self.audio_files = glob.glob(os.path.join(self.audio_dir, file_ext))
 
-            self.audio_files = sorted(self.audio_files)
+            # self.audio_files = sorted(self.audio_files)
 
-            random1 = random.Random(4)
-            random1.shuffle(self.audio_files)
+            # random1 = random.Random(4)
+            # random1.shuffle(self.audio_files)
+            random.shuffle(self.audio_files) # shuffle them
             print(self.audio_files)
-            #random.shuffle(self.audio_files) # shuffle them
 
             if self.subset == "train":
                 start = 0
