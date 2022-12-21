@@ -53,6 +53,8 @@ checkpoint_callback = ModelCheckpoint(
 )
 
 # add all the available trainer options to argparse
+#MJ: class Trainer(     TrainerProperties, => add_argparse_args() is a method of TrainerProperties, which is inherited by Trainer
+
 parser = pl.Trainer.add_argparse_args(parser)
 
 # THIS LINE IS KEY TO PULL THE MODEL NAME

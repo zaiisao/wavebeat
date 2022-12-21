@@ -14,7 +14,7 @@ from wavebeat.utils import center_crop, causal_crop
 from wavebeat.eval import evaluate, find_beats
 from wavebeat.filter import FIRFilter
 
-class Base(pl.LightningModule):
+class Base(pl.LightningModule):  #MJ: Base class for Wavebeat
     """ Base module with train and validation loops.
 
         Args:
