@@ -132,6 +132,7 @@ class DownbeatDataset(torch.utils.data.Dataset):
 
             random1 = random.Random(4)
             random1.shuffle(self.audio_files)
+            print(self.audio_files)
             #random.shuffle(self.audio_files) # shuffle them
 
             if self.subset == "train":
